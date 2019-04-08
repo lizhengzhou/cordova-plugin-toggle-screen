@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova-plugin-toggle-screen" version="1.0.0" 
+    xmlns="http://apache.org/cordova/ns/plugins/1.0" 
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>ScreenToggle</name>
+
+    <js-module name="ScreenToggle" src="www/ScreenToggle.js">
+        <clobbers target="cordova.plugins.ScreenToggle" />
+    </js-module>
+    <platform name="android">
+        <config-file parent="/*" target="res/xml/config.xml">
+            <feature name="ScreenToggle">
+                <param name="android-package" value="cn.lizz.cordova.plugin.ScreenToggle" />
+            </feature>
+        </config-file>
+        <config-file parent="/*" target="AndroidManifest.xml"></config-file>
+        <source-file src="src/android/ScreenToggle.java" target-dir="src/cn/lizz/cordova/plugin" />
+        <source-file src="src/android/ScreenOffAdminReceiver.java" target-dir="src/cn/lizz/cordova/plugin" />
+        <source-file src="src/android/device_admin.xml" target-dir="res/xml" />
+        <source-file src="src/android/BackGroundService.java" target-dir="src/cn/lizz/cordova/plugin" />
+        <source-file src="src/android/HourMinute.java" target-dir="src/cn/lizz/cordova/plugin" />
+
+        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <receiver android:name="cn.lizz.cordova.plugin.ScreenOffAdminReceiver">
+                <intent-filter>
+                    <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+                </intent-filter>
+                <meta-data android:name="android.app.device_admin" android:resource="@xml/device_admin" />
+            </receiver>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <service android:name="cn.lizz.cordova.plugin.BackGroundService"/>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.WAKE_LOCK" />
+            <uses-permission android:name="android.permission.DEVICE_POWER" />
+            <uses-permission android:name="android.permission.USES_POLICY_FORCE_LOCK" />
+            <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
+        </config-file>
+
+
+    </platform>
+</plugin>
