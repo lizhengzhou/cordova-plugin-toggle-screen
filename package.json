@@ -1,7 +1,7 @@
 {
   "name": "cordova-plugin-toggle-screen",
   "version": "1.0.0",
-  "description": "",
+  "description": "control screen with js in cordova and config the times for the screen toggle on timer",
   "cordova": {
     "id": "cordova-plugin-toggle-screen",
     "platforms": [
@@ -12,6 +12,6 @@
     "ecosystem:cordova",
     "cordova-android"
   ],
-  "author": "",
-  "license": "ISC"
+  "author": "lizhengzhou",
+  "license": "Appache-2.0"
 }

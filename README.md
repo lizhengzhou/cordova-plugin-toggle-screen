@@ -1,7 +1,8 @@
 # cordova-plugin-toggle-screen
 
+control screen with js in cordova and config the times for the screen toggle on timer
 
-#onDeviceReady
+## onDeviceReady
 
 ```
 if (cordova.plugins && cordova.plugins.ScreenToggle) {
@@ -9,7 +10,7 @@ cordova.plugins.ScreenToggle.enable();
 }
 ```
 
-#screenToggle check Time Config Per 30 Seconds
+# screenToggle check Time Config Per 30 Seconds
 
 ```
 function screenToggle() {
