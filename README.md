@@ -3,13 +3,13 @@
 
 #onDeviceReady
 
-if (cordova.plugins && cordova.plugins.ScreenToggle) {
+`if (cordova.plugins && cordova.plugins.ScreenToggle) {
 cordova.plugins.ScreenToggle.enable();
-}
+}`
 
 #screenToggle check Time Config Per 30 Seconds
 
-function screenToggle() {
+`function screenToggle() {
     if (selectURL.value) {
         var shiftUrl = "http://" + selectURL.value + "/api/Shift/GetList";
 
@@ -29,4 +29,4 @@ function screenToggle() {
             }
         });
     }
-}
+}`
