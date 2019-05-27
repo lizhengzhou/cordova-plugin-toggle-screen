@@ -86,7 +86,10 @@ public class ScreenToggle extends CordovaPlugin {
             JSONArray closes = args.getJSONArray(1);
             this.config(opens, closes, callbackContext);
             return true;
-        }
+        } else if (action.equals("sync")){
+			String syncUrl = args.getString(0);
+			this.configSync(syncUrl,callbackContext);
+		}
         return false;
     }
 
@@ -207,5 +210,20 @@ public class ScreenToggle extends CordovaPlugin {
     public void turnOffScreen() {
         Log.v(tag, "Off!");
         policyManager.lockNow();
+    }
+
+	
+    private void configSync(String url,CallbackContext callbackContext) {
+
+        Activity context = cordova.getActivity();
+
+        SharedPreferences preferences = context.getSharedPreferences("Config", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        editor.putString("syncUrl", url);        
+
+        editor.commit();
+
+        callbackContext.success("" + true);
     }
 }

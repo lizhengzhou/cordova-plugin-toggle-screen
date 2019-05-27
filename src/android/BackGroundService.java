@@ -10,6 +10,8 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 
+import java.net.URL;
+import java.net.URLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -143,7 +145,7 @@ public class BackGroundService extends Service {
     }
 
     public boolean Match(ArrayList<HourMinute> list){
-        Date now = new Date();
+        Date now = getNow();
         SimpleDateFormat format = new SimpleDateFormat("HH");
         int Hour = Integer.parseInt(format.format(now));
         format=new SimpleDateFormat("mm");
@@ -157,5 +159,40 @@ public class BackGroundService extends Service {
         }
 
         return false;
+    }
+
+	public Date getNow(){
+		SharedPreferences preferences = getSharedPreferences("Config", Context.MODE_PRIVATE);
+        String syncUrl = (String) preferences.getString("syncUrl","");
+		
+		Date now = new Date();
+
+		if(syncUrl!="")
+		{
+			now = VisitURL(syncUrl);
+		}
+	
+		return now;
+	}
+
+	
+    /**
+     * 网址访问
+     *
+     * @param url 网址
+     * @return urlDate 对象网址时间
+     */
+    public Date VisitURL(String url) {
+        Date urlDate = new Date();
+        try {
+            URL url1 = new URL(url);
+            URLConnection conn = url1.openConnection();  //生成连接对象
+            conn.connect();  //连接对象网页
+            urlDate = new Date(conn.getDate());  //获取对象网址时间        
+			Log.i(tag, urlDate.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return urlDate;
     }
 }
