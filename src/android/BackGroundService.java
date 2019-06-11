@@ -33,6 +33,7 @@ public class BackGroundService extends Service {
     PowerManager.WakeLock wakeLock;
     PowerManager.WakeLock screenLock;
     boolean CanRun = false;
+    Thread thread_t;
 
     public BackGroundService() {
     }
@@ -50,9 +51,9 @@ public class BackGroundService extends Service {
 
         powerManager = (PowerManager) this.getApplicationContext().getSystemService(Context.POWER_SERVICE);
         policyManager = (DevicePolicyManager) this.getApplicationContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
-        keyguardManager = (KeyguardManager)this.getApplicationContext().getSystemService(Context.KEYGUARD_SERVICE);
+        keyguardManager = (KeyguardManager) this.getApplicationContext().getSystemService(Context.KEYGUARD_SERVICE);
         keyLock = keyguardManager.newKeyguardLock("unlock");
-        screenLock = powerManager.newWakeLock(PowerManager.ACQUIRE_CAUSES_WAKEUP|PowerManager.FULL_WAKE_LOCK, "lizz:bright");
+        screenLock = powerManager.newWakeLock(PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.FULL_WAKE_LOCK, "lizz:bright");
 
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, tag + ":wakeLockTag");
 
@@ -64,39 +65,48 @@ public class BackGroundService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(tag, "onStartCommand");
 
-        CanRun = true;
-        new Thread() {
-            @Override
-            public void run() {
+        if (thread_t == null) {
+            Log.i(tag, "new thread_t");
+            CanRun = true;
+            thread_t = new Thread() {
+                @Override
+                public void run() {
+                    Date LastOpenStamp = new Date();
+                    LastOpenStamp.setHours(0);
+                    Date LastCloseStamp = new Date();
+                    LastCloseStamp.setHours(0);
+                    while (CanRun) {
+                        try {
 
-                while (CanRun) {
-                    try {
+                            Log.i(tag, "DoSomething");
 
-                        Log.i(tag, "DoSomething");
-
-                        if (powerManager != null) {
-                            boolean isScreenOn = powerManager.isScreenOn();
-                            Log.i(tag, "isScreenOn：" + isScreenOn);
-                            if (isScreenOn) {
-                                ArrayList<HourMinute> list = getList(false);
-                                if(Match(list)){
-                                    turnOffScreen();
-                                }
-                            } else {
-                                ArrayList<HourMinute> list = getList(true);
-                                if(Match(list)){
-                                    turnOnScreen();
+                            if (powerManager != null) {
+                                boolean isScreenOn = powerManager.isScreenOn();
+                                Log.i(tag, "isScreenOn：" + isScreenOn);
+                                if (isScreenOn) {
+                                    ArrayList<HourMinute> list = getList(false);
+                                    if (CheckStamp(LastCloseStamp) && Match(list)) {
+                                        turnOffScreen();
+                                        LastCloseStamp = new Date();
+                                    }
+                                } else {
+                                    ArrayList<HourMinute> list = getList(true);
+                                    if (CheckStamp(LastOpenStamp) && Match(list)) {
+                                        turnOnScreen();
+                                        LastOpenStamp = new Date();
+                                    }
                                 }
                             }
-                        }
 
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
-            }
-        }.start();
+            };
+            thread_t.start();
+        }
 
         return super.onStartCommand(intent, flags, startId);
     }
@@ -124,58 +134,57 @@ public class BackGroundService extends Service {
         policyManager.lockNow();
     }
 
-    public ArrayList<HourMinute> getList(boolean IsOpen){
+    public ArrayList<HourMinute> getList(boolean IsOpen) {
         ArrayList<HourMinute> list = new ArrayList<HourMinute>();
 
         SharedPreferences preferences = getSharedPreferences("Config", Context.MODE_PRIVATE);
-        HashSet<String> hashSet = (HashSet<String>) preferences.getStringSet(IsOpen?"open":"close",new HashSet<String>());
-        for (String str:hashSet) {
+        HashSet<String> hashSet = (HashSet<String>) preferences.getStringSet(IsOpen ? "open" : "close", new HashSet<String>());
+        for (String str : hashSet) {
             Log.d(tag, str);
 
-            if(Pattern.matches("^\\d{1,2}:\\d{1,2}:\\d{1,2}$", str)){
+            if (Pattern.matches("^\\d{1,2}:\\d{1,2}:\\d{1,2}$", str)) {
                 String[] splitStr = str.split(":");
 
                 HourMinute hm = new HourMinute();
-                hm.Hour=Integer.parseInt(splitStr[0]);
-                hm.Minute=Integer.parseInt(splitStr[1]);
+                hm.Hour = Integer.parseInt(splitStr[0]);
+                hm.Minute = Integer.parseInt(splitStr[1]);
                 list.add(hm);
             }
         }
         return list;
     }
 
-    public boolean Match(ArrayList<HourMinute> list){
+    public boolean Match(ArrayList<HourMinute> list) {
         Date now = getNow();
         SimpleDateFormat format = new SimpleDateFormat("HH");
         int Hour = Integer.parseInt(format.format(now));
-        format=new SimpleDateFormat("mm");
+        format = new SimpleDateFormat("mm");
         int Minute = Integer.parseInt(format.format(now));
 
-        for (HourMinute item:list) {
-            if(item.Hour==Hour&&item.Minute==Minute)
-            {
+        for (HourMinute item : list) {
+            int NowMinutes = Hour * 60 + Minute;
+            int CheckMinites = item.Hour * 60 + item.Minute;
+            if (NowMinutes >= CheckMinites && (NowMinutes - CheckMinites) < 5) {
                 return true;
             }
         }
-
         return false;
     }
 
-	public Date getNow(){
-		SharedPreferences preferences = getSharedPreferences("Config", Context.MODE_PRIVATE);
-        String syncUrl = (String) preferences.getString("syncUrl","");
-		
-		Date now = new Date();
+    public Date getNow() {
+        SharedPreferences preferences = getSharedPreferences("Config", Context.MODE_PRIVATE);
+        String syncUrl = (String) preferences.getString("syncUrl", "");
 
-		if(syncUrl!="")
-		{
-			now = VisitURL(syncUrl);
-		}
-	
-		return now;
-	}
+        Date now = new Date();
 
-	
+        if (syncUrl != "") {
+            now = VisitURL(syncUrl);
+        }
+
+        return now;
+    }
+
+
     /**
      * 网址访问
      *
@@ -189,10 +198,27 @@ public class BackGroundService extends Service {
             URLConnection conn = url1.openConnection();  //生成连接对象
             conn.connect();  //连接对象网页
             urlDate = new Date(conn.getDate());  //获取对象网址时间        
-			Log.i(tag, urlDate.toString());
+            Log.i(tag, urlDate.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
         return urlDate;
+    }
+
+
+    boolean CheckStamp(Date LastStamp) {
+        Date Now = new Date();
+
+        long longStart = LastStamp.getTime(); //获取开始时间毫秒数
+        long longEnd = Now.getTime();  //获取结束时间毫秒数
+        long longExpend = longEnd - longStart;  //获取时间差
+
+        long longMinutes = longExpend / (60 * 1000);   //根据时间差来计算分钟数
+
+        if (longMinutes > 5) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
