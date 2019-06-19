@@ -14,12 +14,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
 import java.util.HashSet;
 import java.util.regex.Pattern;
 
@@ -34,6 +29,9 @@ public class BackGroundService extends Service {
     PowerManager.WakeLock screenLock;
     boolean CanRun = false;
     Thread thread_t;
+    int checkThreshold = 10;
+    Date RemoteDate = new Date();
+    Date LocalDate = new Date();
 
     public BackGroundService() {
     }
@@ -65,7 +63,7 @@ public class BackGroundService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(tag, "onStartCommand");
 
-        if (thread_t == null) {
+        if (!CanRun) {
             Log.i(tag, "new thread_t");
             CanRun = true;
             thread_t = new Thread() {
@@ -105,6 +103,7 @@ public class BackGroundService extends Service {
                     }
                 }
             };
+            thread_t.setDaemon(true);
             thread_t.start();
         }
 
@@ -156,6 +155,7 @@ public class BackGroundService extends Service {
 
     public boolean Match(ArrayList<HourMinute> list) {
         Date now = getNow();
+        Log.i(tag, now.toString());
         SimpleDateFormat format = new SimpleDateFormat("HH");
         int Hour = Integer.parseInt(format.format(now));
         format = new SimpleDateFormat("mm");
@@ -164,7 +164,7 @@ public class BackGroundService extends Service {
         for (HourMinute item : list) {
             int NowMinutes = Hour * 60 + Minute;
             int CheckMinites = item.Hour * 60 + item.Minute;
-            if (NowMinutes >= CheckMinites && (NowMinutes - CheckMinites) < 5) {
+            if (NowMinutes >= CheckMinites && (NowMinutes - CheckMinites) < checkThreshold) {
                 return true;
             }
         }
@@ -192,14 +192,17 @@ public class BackGroundService extends Service {
      * @return urlDate 对象网址时间
      */
     public Date VisitURL(String url) {
-        Date urlDate = new Date();
+        Date urlDate = GetFixedLocalDate();
         try {
             URL url1 = new URL(url);
             URLConnection conn = url1.openConnection();  //生成连接对象
             conn.connect();  //连接对象网页
             urlDate = new Date(conn.getDate());  //获取对象网址时间        
             Log.i(tag, urlDate.toString());
+            RemoteDate = urlDate;
+            LocalDate = new Date();
         } catch (Exception e) {
+            Log.d(tag, e.getMessage());
             e.printStackTrace();
         }
         return urlDate;
@@ -215,10 +218,24 @@ public class BackGroundService extends Service {
 
         long longMinutes = longExpend / (60 * 1000);   //根据时间差来计算分钟数
 
-        if (longMinutes > 5) {
+        if (longMinutes > checkThreshold) {
             return true;
         } else {
             return false;
         }
+    }
+
+    Date GetFixedLocalDate() {
+        Date now = new Date();
+
+        long longNow = now.getTime();
+        long longRemoteDate = RemoteDate.getTime();
+        long longLocalDate = LocalDate.getTime();
+
+        long longFixedNow = longNow - longLocalDate + longRemoteDate;
+
+        now = new Date(longFixedNow);
+
+        return now;
     }
 }

@@ -226,4 +226,15 @@ public class ScreenToggle extends CordovaPlugin {
 
         callbackContext.success("" + true);
     }
+
+    @Override
+    public void onPause(boolean multitasking) {
+
+    }
+
+
+    @Override
+    public void onResume(boolean multitasking) {
+        StartService();
+    }
 }
