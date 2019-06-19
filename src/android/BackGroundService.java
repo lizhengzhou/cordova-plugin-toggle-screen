@@ -96,8 +96,12 @@ public class BackGroundService extends Service {
                                 }
                             }
 
-                            Thread.sleep(1000);
+                            Thread.sleep(30000);
                         } catch (InterruptedException e) {
+                            Log.d(tag, e.getMessage());
+                            e.printStackTrace();
+                        } catch (Exception e) {
+                            Log.d(tag, e.getMessage());
                             e.printStackTrace();
                         }
                     }
